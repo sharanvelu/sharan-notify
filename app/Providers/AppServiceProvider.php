@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Packages\FcmChannel;
+use GuzzleHttp\Client;
+use Illuminate\Notifications\ChannelManager;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -13,7 +17,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        Notification::resolved(function (ChannelManager $service) {
+            $service->extend('fcm', function () {
+                return new FcmChannel(app(Client::class), config('services.fcm.key'));
+            });
+        });
     }
 
     /**
