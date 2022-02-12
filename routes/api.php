@@ -14,7 +14,9 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('health-check', [\App\Http\Controllers\Api\HealthCheckController::class, 'healthCheck']);
+Route::get('health-check', function () {
+    return response()->json([], 200);
+});
 
 Route::prefix('v1')->group(function () {
     Route::post('device-token', [DeviceController::class, 'storeDeviceToken']);
