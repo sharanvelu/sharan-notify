@@ -2,12 +2,13 @@ FROM php:8.0-apache-buster
 
 RUN apt-get update && \
     apt-get install -y \
-        zlib1g-dev \
-        vim \
         git \
         libonig-dev \
         libpng-dev \
-        libzip-dev
+        libzip-dev \
+        supervisor \
+        vim \
+        zlib1g-dev
 
 RUN docker-php-ext-install mbstring zip gd bcmath mysqli pdo pdo_mysql
 
@@ -27,10 +28,14 @@ RUN chmod -R 777 /var/www/html
 
 RUN composer install
 
+#supervisor config
+COPY docker-deployment/supervisor.conf /etc/supervisor/supervisord.conf
+COPY docker-deployment/supervisor.conf /etc/supervisord.conf
+
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 COPY docker-deployment/entrypoint.sh /usr/bin/entrypoint.sh
 RUN chmod +x /usr/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
 
-CMD ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
