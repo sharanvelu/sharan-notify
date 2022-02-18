@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      php: 8.0.4
+      php: 8.0
   pre_build:
     commands:
       - echo Logging in to Amazon ECR....
@@ -11,8 +11,6 @@ phases:
   build:
     commands:
       - echo Build started on `date`
-      - echo installing composer...
-      - composer install
       - echo Building the Docker image...
       - docker build -t ${ECR_REPOSITORY_URL}:${CODEBUILD_RESOLVED_SOURCE_VERSION} .
       - echo Build completed on `date`
