@@ -3,7 +3,7 @@
         "environmentFiles": [
             {
                 "type": "s3",
-                "value": "<envfile>"
+                "value": "<env-file>"
             }
         ],
         "entryPoint": [
@@ -11,7 +11,7 @@
         ],
         "portMappings": [
             {
-                "hostPort": 80,
+                "hostPort": 0,
                 "protocol": "tcp",
                 "containerPort": 80
             }
@@ -19,9 +19,9 @@
         "command": [
             "/usr/sbin/apache2ctl", "-D", "FOREGROUND"
         ],
-        "memoryReservation": <memory-reservation>,
-        "cpu": <cpu>,
-        "memory": <memory>,
+        "memoryReservation": "<memory-reservation>",
+        "cpu": "<cpu>",
+        "memory": "<memory>",
         "workingDirectory": "/var/www/html",
         "image": "<IMG>",
         "essential": true,
