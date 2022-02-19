@@ -23,7 +23,7 @@
         "cpu": "<cpu>",
         "memory": "<memory>",
         "workingDirectory": "/var/www/html",
-        "image": "<IMG>",
+        "image": "<img>",
         "essential": true,
         "name": "<container-name>"
     }
