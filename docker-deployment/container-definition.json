@@ -1,0 +1,30 @@
+[
+    {
+        "environmentFiles": [
+            {
+                "type": "s3",
+                "value": "<env-file>"
+            }
+        ],
+        "entryPoint": [
+            "entrypoint.sh"
+        ],
+        "portMappings": [
+            {
+                "hostPort": 0,
+                "protocol": "tcp",
+                "containerPort": 80
+            }
+        ],
+        "command": [
+            "/usr/sbin/apache2ctl", "-D", "FOREGROUND"
+        ],
+        "memoryReservation": "<memory-reservation>",
+        "cpu": "<cpu>",
+        "memory": "<memory>",
+        "workingDirectory": "/var/www/html",
+        "image": "<img>",
+        "essential": true,
+        "name": "<container-name>"
+    }
+]
