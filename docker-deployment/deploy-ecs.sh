@@ -2,54 +2,44 @@
 
 set -e
 
-TASK_FAMILY=$TASK_DEFINITION
-SERVICE_NAME=$SERVICE_NAME
-CLUSTER_NAME=$CLUSTER_NAME
-CPUENV=$CPU
-MEMORYENV=$MEMORY
-IMG_VERSION=$CODEBUILD_RESOLVED_SOURCE_VERSION
-IMAGE=${ECR_REPOSITORY_URL}:${IMG_VERSION}
-ENVFILE=${ENVFILE_S3}
+IMAGE="${ECR_REPOSITORY_URL}:${IMAGE_ID}"
 
+echo ""
+echo -e "AWS Log Group  : ${AWS_LOG_GROUP}"
+echo -e "Container Name : ${CONTAINER_NAME}"
+echo -e "Task Role ARN  : ${TASK_ROLE_ARN}"
+echo -e "Image URI      : ${IMAGE}\n"
 
-echo "AWS Log Group : ${AWS_LOG_GROUP}"
-echo "Container Name : ${CONTAINER_NAME}"
-echo "Task Role ARN : ${TASK_ROLE_ARN}"
-
-IMGAGE_PACEHOLDER="<IMG>"
-ENVFILE_PACEHOLDER="<envfile>"
-CPU_PACEHOLDER="<cpu>"
-MEMORY_PACEHOLDER="<memory>"
-MEMORY_RES_PACEHOLDER="<memory-reservation>"
-CONTAINER_NAME_PACEHOLDER="<container-name>"
-AWS_LOG_GROUP_PACEHOLDER="<aws-log-group>"
-
+IMAGE_PLACEHOLDER="<img>"
+ENV_FILE_PLACEHOLDER="<env-file>"
+CPU_PLACEHOLDER="\"<cpu>\""
+MEMORY_PLACEHOLDER="\"<memory>\""
+MEMORY_RES_PLACEHOLDER="\"<memory-reservation>\""
+CONTAINER_NAME_PLACEHOLDER="<container-name>"
+AWS_LOG_GROUP_PLACEHOLDER="<aws-log-group>"
 
 CONTAINER_DEFINITION_FILE=$(cat docker-deployment/container-definition.json)
-CONTAINER_DEFINITION="${CONTAINER_DEFINITION_FILE//$IMGAGE_PACEHOLDER/$IMAGE}"
-CONTAINER_DEFINITION="${CONTAINER_DEFINITION//$AWS_LOG_GROUP_PACEHOLDER/$AWS_LOG_GROUP}"
-CONTAINER_DEFINITION="${CONTAINER_DEFINITION//$CONTAINER_NAME_PACEHOLDER/$CONTAINER_NAME}"
-CONTAINER_DEFINITION="${CONTAINER_DEFINITION//$ENVFILE_PACEHOLDER/$ENVFILE}"
-CONTAINER_DEFINITION="${CONTAINER_DEFINITION//$CPU_PACEHOLDER/$CPUENV}"
-CONTAINER_DEFINITION="${CONTAINER_DEFINITION//$MEMORY_PACEHOLDER/$MEMORYENV}"
-CONTAINER_DEFINITION="${CONTAINER_DEFINITION//$MEMORY_RES_PACEHOLDER/$MEMORYRES}"
 
-export TASK_VERSION=$(aws ecs register-task-definition --family ${TASK_FAMILY} --container-definitions "${CONTAINER_DEFINITION}" --execution-role-arn ${TASK_ROLE_ARN} --task-role-arn ${TASK_ROLE_ARN} --network-mode bridge --requires-compatibilities EC2 --tags key="commit",value=$CODEBUILD_RESOLVED_SOURCE_VERSION | jq --raw-output '.taskDefinition.revision')
-echo "Registered ECS Task Definition: " $TASK_VERSION
+CONTAINER_DEFINITION="${CONTAINER_DEFINITION_FILE//${IMAGE_PLACEHOLDER}/${IMAGE}}"
+CONTAINER_DEFINITION="${CONTAINER_DEFINITION//${AWS_LOG_GROUP_PLACEHOLDER}/${AWS_LOG_GROUP}}"
+CONTAINER_DEFINITION="${CONTAINER_DEFINITION//${CONTAINER_NAME_PLACEHOLDER}/${CONTAINER_NAME}}"
+CONTAINER_DEFINITION="${CONTAINER_DEFINITION//${ENV_FILE_PLACEHOLDER}/${ENV_FILE_S3}}"
+CONTAINER_DEFINITION="${CONTAINER_DEFINITION//${CPU_PLACEHOLDER}/${CPU}}"
+CONTAINER_DEFINITION="${CONTAINER_DEFINITION//${MEMORY_PLACEHOLDER}/${MEMORY}}"
+CONTAINER_DEFINITION="${CONTAINER_DEFINITION//${MEMORY_RES_PLACEHOLDER}/${MEMORY_RES}}"
 
+export TASK_VERSION=$(aws ecs register-task-definition --family ${TASK_DEFINITION} --container-definitions "${CONTAINER_DEFINITION}" --execution-role-arn ${TASK_ROLE_ARN} --task-role-arn ${TASK_ROLE_ARN} --network-mode bridge --requires-compatibilities EC2 --tags key="commit",value=$IMAGE_ID | jq --raw-output '.taskDefinition.revision')
+echo -e "TDF Version    : ${TASK_VERSION:---nil--}"
 
-if [ -n "$TASK_VERSION" ]; then
-    echo "Update ECS Cluster: " $CLUSTER_NAME
-    echo "Service: " $SERVICE_NAME
-    echo "Task Definition: " $TASK_FAMILY:$TASK_VERSION
+if [ -n "${TASK_VERSION}" ]; then
+    echo -e "ECS Cluster    : ${CLUSTER_NAME}"
+    echo -e "ECS Service    : ${SERVICE_NAME}"
+    echo -e "Task Definition: ${TASK_DEFINITION}:${TASK_VERSION}\n"
 
-    DEPLOYED_SERVICE=$(aws ecs update-service --cluster $CLUSTER_NAME --service $SERVICE_NAME --task-definition $TASK_FAMILY:$TASK_VERSION --force-new-deployment | jq --raw-output '.service.serviceName')
-    echo "Deployment of service \"$DEPLOYED_SERVICE\" complete!!"
+    DEPLOYED_SERVICE=$(aws ecs update-service --cluster ${CLUSTER_NAME} --service ${SERVICE_NAME} --task-definition ${TASK_DEFINITION}:${TASK_VERSION} --force-new-deployment | jq --raw-output '.service.serviceName')
+    echo -e "${CLUSTER_NAME} => ${DEPLOYED_SERVICE} : Deployed Successfully!"
 
 else
-    echo "exit: No task definition"
-    echo "Deleting the created Image..."
-    OUTPUT=$(aws ecr batch-delete-image --repository-name ${ECR_REPO_NAME} --image-ids imageTag=${IMG_VERSION})
-    echo "Created Image deleted..."
+    echo "exit: Unable to register new task definition or version."
     exit;
 fi

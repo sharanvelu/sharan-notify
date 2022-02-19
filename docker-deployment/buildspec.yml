@@ -6,21 +6,17 @@ phases:
       php: 8.0
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR....
+      - echo "Logging in to Amazon ECR..."
       - aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 696088320052.dkr.ecr.ap-south-1.amazonaws.com
   build:
     commands:
-      - echo Build started on `date`
-      - echo installing composer...
-      - composer install
-      - echo Building the Docker image...
-      - docker build -t ${ECR_REPOSITORY_URL}:${CODEBUILD_RESOLVED_SOURCE_VERSION} .
-      - echo Build completed on `date`
-      - echo Pushing the Docker image...
-      - docker push ${ECR_REPOSITORY_URL}:${CODEBUILD_RESOLVED_SOURCE_VERSION}
+      - export IMAGE_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}
+      - echo "Build started at `date`"
+      - echo "Building the Docker image..."
+      - docker build -t ${ECR_REPOSITORY_URL}:${IMAGE_ID} .
+      - echo "Build completed at `date`"
+      - echo "Pushing the Docker image..."
+      - docker push ${ECR_REPOSITORY_URL}:${IMAGE_ID}
   post_build:
     commands:
-      - export IMAGE_ID=${CODEBUILD_RESOLVED_SOURCE_VERSION}
-      - echo "ImageID\ :\ ${IMAGE_ID}"
       - bash ./docker-deployment/deploy-ecs.sh
-      - echo "Successfully finished Deploying!!"
