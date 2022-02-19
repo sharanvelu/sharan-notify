@@ -29,16 +29,15 @@ CONTAINER_DEFINITION="${CONTAINER_DEFINITION//${MEMORY_PLACEHOLDER}/${MEMORY}}"
 CONTAINER_DEFINITION="${CONTAINER_DEFINITION//${MEMORY_RES_PLACEHOLDER}/${MEMORY_RES}}"
 
 export TASK_VERSION=$(aws ecs register-task-definition --family ${TASK_DEFINITION} --container-definitions "${CONTAINER_DEFINITION}" --execution-role-arn ${TASK_ROLE_ARN} --task-role-arn ${TASK_ROLE_ARN} --network-mode bridge --requires-compatibilities EC2 --tags key="commit",value=$IMAGE_ID | jq --raw-output '.taskDefinition.revision')
-echo -e "Registered ECS Task Definition Version: ${TASK_VERSION}\n"
-
+echo -e "TDF Version    : ${TASK_VERSION:---nil--}"
 
 if [ -n "${TASK_VERSION}" ]; then
-    echo -e "Updating ECS Cluster : ${CLUSTER_NAME}"
-    echo -e "ECS Service : ${SERVICE_NAME}"
+    echo -e "ECS Cluster    : ${CLUSTER_NAME}"
+    echo -e "ECS Service    : ${SERVICE_NAME}"
     echo -e "Task Definition: ${TASK_DEFINITION}:${TASK_VERSION}\n"
 
     DEPLOYED_SERVICE=$(aws ecs update-service --cluster ${CLUSTER_NAME} --service ${SERVICE_NAME} --task-definition ${TASK_DEFINITION}:${TASK_VERSION} --force-new-deployment | jq --raw-output '.service.serviceName')
-    echo -e "Deployment of service \"${DEPLOYED_SERVICE}\" complete!"
+    echo -e "${CLUSTER_NAME} => ${DEPLOYED_SERVICE} : Deployed Successfully!"
 
 else
     echo "exit: Unable to register new task definition or version."
