@@ -17,7 +17,7 @@
             }
         ],
         "command": [
-            "/usr/sbin/apache2ctl", "-D", "FOREGROUND"
+            "/usr/bin/supervisord", "-c", "/etc/supervisord.conf"
         ],
         "memoryReservation": "<memory-reservation>",
         "cpu": "<cpu>",
